@@ -150,46 +150,6 @@ module.exports.resendOTP = async (req, res) => {
   }
 };
 // Edit User Profile
-// module.exports.updateProfile = async (req, res) => {
-//   try {
-//     const user = await User.findById(req.user.id);
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     const { name, username, mobile } = req.body;
-//     let profilePicUrl = user.profilePic;
-//     let bannerImageUrl = user.bannerImage;
-
-//     // ✅ Optional chaining (safe access)
-//     if (req.files?.profilePic?.[0]) {
-//       const profilePicResult = await uploadToCloudinary(
-//         req.files.profilePic[0].buffer,
-//         "profile_photos"
-//       );
-//       profilePicUrl = profilePicResult;
-//     }
-
-//     if (req.files?.bannerImage?.[0]) {
-//       const bannerImageResult = await uploadToCloudinary(
-//         req.files.bannerImage[0].buffer,
-//         "banner_images"
-//       );
-//       bannerImageUrl = bannerImageResult;
-//     }
-
-//     user.name = name || user.name;
-//     user.username = username || user.username;
-//     user.mobile = mobile || user.mobile;
-//     user.profilePic = profilePicUrl;
-//     user.bannerImage = bannerImageUrl;
-
-//     await user.save();
-//     res.status(200).json({ success: true, message: "Profile updated", user });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
 module.exports.updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -198,51 +158,91 @@ module.exports.updateProfile = async (req, res) => {
     }
 
     const { name, username, mobile } = req.body;
-    
-    // Initialize with current values
-    let updateData = {
-      name: name || user.name,
-      username: username || user.username,
-      mobile: mobile || user.mobile
-    };
+    let profilePicUrl = user.profilePic;
+    let bannerImageUrl = user.bannerImage;
 
-    // Handle profile picture upload
+    // ✅ Optional chaining (safe access)
     if (req.files?.profilePic?.[0]) {
       const profilePicResult = await uploadToCloudinary(
         req.files.profilePic[0].buffer,
         "profile_photos"
       );
-      updateData.profilePic = profilePicResult.secure_url || profilePicResult; // Handle different Cloudinary responses
+      profilePicUrl = profilePicResult;
     }
-    console.log("Profile Pic Upload Result:", profilePicResult);
-    // Handle banner image upload
+
     if (req.files?.bannerImage?.[0]) {
       const bannerImageResult = await uploadToCloudinary(
         req.files.bannerImage[0].buffer,
         "banner_images"
       );
-      updateData.bannerImage = bannerImageResult.secure_url || bannerImageResult;
+      bannerImageUrl = bannerImageResult;
     }
 
-    // Update user with new data
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      updateData,
-      { new: true } // Return the updated document
-    ).select('-password -otp -otpExpiry'); // Exclude sensitive fields
+    user.name = name || user.name;
+    user.username = username || user.username;
+    user.mobile = mobile || user.mobile;
+    user.profilePic = profilePicUrl;
+    user.bannerImage = bannerImageUrl;
 
-    res.status(200).json({ 
-      success: true, 
-      message: "Profile updated", 
-      user: updatedUser 
-    });
+    await user.save();
+    res.status(200).json({ success: true, message: "Profile updated", user });
   } catch (error) {
-    console.error("Profile update error:", error); // Better error logging
-    res.status(500).json({ 
-      message: error.message || "Failed to update profile" 
-    });
+    res.status(500).json({ message: error.message });
   }
 };
+// module.exports.updateProfile = async (req, res) => {
+//   try {
+//     const user = await User.findById(req.user.id);
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     const { name, username, mobile } = req.body;
+    
+//     // Initialize with current values
+//     let updateData = {
+//       name: name || user.name,
+//       username: username || user.username,
+//       mobile: mobile || user.mobile
+//     };
+
+//     // Handle profile picture upload
+//     if (req.files?.profilePic?.[0]) {
+//       const profilePicResult = await uploadToCloudinary(
+//         req.files.profilePic[0].buffer,
+//         "profile_photos"
+//       );
+//       updateData.profilePic = profilePicResult.secure_url || profilePicResult; // Handle different Cloudinary responses
+//     }
+//     console.log("Profile Pic Upload Result:", profilePicResult);
+//     // Handle banner image upload
+//     if (req.files?.bannerImage?.[0]) {
+//       const bannerImageResult = await uploadToCloudinary(
+//         req.files.bannerImage[0].buffer,
+//         "banner_images"
+//       );
+//       updateData.bannerImage = bannerImageResult.secure_url || bannerImageResult;
+//     }
+
+//     // Update user with new data
+//     const updatedUser = await User.findByIdAndUpdate(
+//       req.user.id,
+//       updateData,
+//       { new: true } // Return the updated document
+//     ).select('-password -otp -otpExpiry'); // Exclude sensitive fields
+
+//     res.status(200).json({ 
+//       success: true, 
+//       message: "Profile updated", 
+//       user: updatedUser 
+//     });
+//   } catch (error) {
+//     console.error("Profile update error:", error); // Better error logging
+//     res.status(500).json({ 
+//       message: error.message || "Failed to update profile" 
+//     });
+//   }
+// };
 // Delete User Profile
 module.exports.deleteProfile = async (req, res) => {
   try {
