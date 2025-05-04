@@ -14,7 +14,7 @@ const AuthenticatePage = () => {
 
   const handleLoginSubmit = async (userEmail) => {
     try {
-      toast.info('Sending OTP to your email...');
+      // toast.info('Sending OTP to your email...');
       await loginUser({ email: userEmail });
       setEmail(userEmail);
       setStep("verifyLogin");
@@ -26,12 +26,12 @@ const AuthenticatePage = () => {
 
   const handleRegisterSubmit = async (formData) => {
     try {
-      toast.info('Registering your account...');
+      // toast.info('Registering your account...');
       await registerUser(formData);
       setEmail(formData.email);
       setUserData(formData);
       setStep("verifyEmail");
-      toast.success('Registration successful! OTP sent to your email.');
+      toast.success('OTP sent to your email.');
     } catch (err) {
       toast.error(err.message || 'Registration failed');
     }
@@ -39,7 +39,7 @@ const AuthenticatePage = () => {
 
   const handleVerifyEmail = async (otp) => {
     try {
-      toast.info('Verifying your email...');
+      // toast.info('Verifying your email...');
       // Only verify email, don't try to login
       const response = await verifyEmail({ email, otp });
       
@@ -47,7 +47,7 @@ const AuthenticatePage = () => {
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       
-      toast.success('Email verified successfully! Redirecting to profile...');
+      toast.success('Email verified successfully!');
       navigate("/profile");
     } catch (err) {
       toast.error(err.message || 'Verification failed');
@@ -56,11 +56,11 @@ const AuthenticatePage = () => {
 
   const handleVerifyLogin = async (otp) => {
     try {
-      toast.info('Verifying OTP...');
+      // toast.info('Verifying OTP...');
       const { token, user } = await verifyLoginOTP({ email, otp });
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      toast.success('Login successful! Redirecting to profile...');
+      toast.success('Login successful!');
       navigate("/profile");
     } catch (err) {
       toast.error(err.message || 'Login verification failed');

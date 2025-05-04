@@ -23,7 +23,7 @@ export const createPost = (formData) => {
   });
 };
 export const getMyPosts = () => API.get('/myposts');
-console.log(API);
+// console.log(API);
 export const getAllPosts = () => API.get('/');
 export const updatePost = (id, data) => API.put(`/update/${id}`, data);
 export const deletePost = (id) => API.delete(`/delete/${id}`);
