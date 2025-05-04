@@ -6,10 +6,12 @@ import { useAuth } from "../context/AuthContext";
 import { NavLink, useNavigate } from "react-router-dom";
 import { logout, deleteProfile } from "../features/users/UsersApi";
 import UsersEditDetailsForm from "../features/users/UsersEditDetailsForm";
+import CreatePostForm from "../features/posts/CreatePost";
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
   const [users, setUsers] = useState([]);
   const [user, setUser] = useState(null);
+  const [showCreatePost, setShowCreatePost] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showEditForm, setShowEditForm] = useState(false);
   const { user: currentUser, logout: authLogout } = useAuth();
@@ -109,12 +111,12 @@ const HomePage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <NavLink
-                    to="/create-post"
-                    className="block w-full text-center bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition"
-                  >
-                    Create Post
-                  </NavLink>
+                <button
+                      onClick={() => setShowCreatePost(true)}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+                    >
+                      Create Post
+                    </button>
                   <NavLink
                     to={`/user/${currentUser._id}`}
                     className="block w-full text-center bg-gray-200 py-2 rounded hover:bg-gray-300 transition"
@@ -234,6 +236,14 @@ const HomePage = () => {
           onUpdate={handleUpdateProfile}
         />
       )}
+      {showCreatePost && (
+              <CreatePostForm
+                onClose={() => setShowCreatePost(false)}
+                onPostCreated={() => {
+                  setShowCreatePost(false);
+                }}
+              />
+            )}
     </div>
   );
 };
