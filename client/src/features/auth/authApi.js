@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:3000/api/users",
+  baseURL: `${VITE_BACKEND_URI}/users`,
   withCredentials: true,
 });
 
