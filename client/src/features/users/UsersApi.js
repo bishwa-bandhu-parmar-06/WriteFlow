@@ -1,8 +1,9 @@
 // src/features/users/usersApi.js
 import axios from "axios";
-
+const backenduri = import.meta.env.VITE_BACKEND_URI;
+console.log(backenduri)
 const API = axios.create({
-  baseURL: "http://localhost:3000/api/users",
+  baseURL: `${backenduri}/api/users`,
   withCredentials: true,
 });
 

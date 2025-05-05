@@ -1,8 +1,10 @@
 // src/features/posts/postsApi.js
+ 
 import axios from "axios";
+const backenduri = import.meta.env.VITE_BACKEND_URI;
 
 const API = axios.create({
-  baseURL: `${VITE_BACKEND_URI}/posts`,
+  baseURL: `${backenduri}/api/posts`,
   withCredentials: true,
 });
 

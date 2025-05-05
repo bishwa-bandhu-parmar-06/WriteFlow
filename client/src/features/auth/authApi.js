@@ -1,7 +1,7 @@
 import axios from "axios";
-
+const backenduri = import.meta.env.VITE_BACKEND_URI;
 const API = axios.create({
-  baseURL: `${VITE_BACKEND_URI}/users`,
+  baseURL: `${backenduri}/api/users`,
   withCredentials: true,
 });
 
