@@ -43,8 +43,12 @@ const HomePage = () => {
     fetchUsers();
   }, []);
 
-  const handlePostUpdated = () => {
-    fetchPosts();
+  const handlePostUpdated = (updatedPost) => {
+    setPosts(prevPosts => 
+      prevPosts.map(post => 
+        post._id === updatedPost._id ? updatedPost : post
+      )
+    );
   };
 
   const handlePostDeleted = (deletedPostId) => {

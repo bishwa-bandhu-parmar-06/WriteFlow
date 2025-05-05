@@ -32,9 +32,9 @@ const EditPost = ({ post, onCancel, onSave }) => {
         formData.append('removeImage', 'true');
       }
       
-      await updatePost(post._id, formData);
-      onSave();
-      toast.success('Post updated successfully');
+      const response = await updatePost(post._id, formData);
+      onSave(response.data); // Pass the updated post data to the parent
+      // toast.success('Post updated successfully');
     } catch (error) {
       console.error('Error updating post:', error);
       toast.error('Failed to update post');
@@ -42,7 +42,6 @@ const EditPost = ({ post, onCancel, onSave }) => {
       setIsLoading(false);
     }
   };
-
   return (
     <div className="bg-white shadow-md rounded-lg p-4 mb-6 w-full max-w-2xl mx-auto">
       <h3 className="text-lg font-bold mb-4">Edit Post</h3>

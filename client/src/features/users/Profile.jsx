@@ -129,7 +129,13 @@ const Profile = () => {
     setUser(updatedUser);
     setShowEditForm(false);
   };
-
+  const handlePostUpdated = (updatedPost) => {
+    setMyPosts(prevPosts => 
+      prevPosts.map(post => 
+        post._id === updatedPost._id ? updatedPost : post
+      )
+    );
+  };
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
   if (!user) return <div className="flex justify-center items-center h-screen">User not found</div>;
 
@@ -251,9 +257,15 @@ const Profile = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {myPosts.map((post) => (
-                <SinglePost key={post._id} post={post} />
-              ))}
+              
+  {myPosts.map((post) => (
+    <SinglePost 
+      key={post._id} 
+      post={post}
+      onPostUpdated={handlePostUpdated}
+    />
+  ))}
+
             </div>
           )}
         </div>

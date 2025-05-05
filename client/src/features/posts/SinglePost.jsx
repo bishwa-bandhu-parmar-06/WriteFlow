@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toggleLike, createComment, deletePost } from "../posts/postsApi";
 import { useAuth } from "../../context/AuthContext";
 import EditPost from "./EditPost";
@@ -15,10 +15,16 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const postDate = new Date(createdAt).toLocaleString();
   const isLiked = currentUser && likes.includes(currentUser._id);
   const isAuthor = currentUser && currentUser._id === userId?._id;
+
+  // Determine the context
+  const isHomePage = location.pathname === "/";
+  const isProfilePage = location.pathname.includes("/profile") || 
+                       location.pathname.includes("/user");
 
   const handleLike = async () => {
     if (!currentUser) {
@@ -108,36 +114,88 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
       <EditPost
         post={post}
         onCancel={() => setIsEditing(false)}
-        onSave={() => {
+        onSave={(updatedPost) => {
           setIsEditing(false);
-          onPostUpdated?.();
+          // Update the local post data with the response
+          Object.assign(post, updatedPost);
+          onPostUpdated?.(updatedPost); // Pass the updated post to parent
           toast.success("Post updated successfully");
         }}
       />
     );
   }
 
+  const renderOptionsMenu = () => {
+    if (!showOptions) return null;
+  
+    
+    return (
+      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Always show View Profile */}
+        <button
+          onClick={() => {
+            handleViewProfile();
+            setShowOptions(false);
+          }}
+          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+        >
+          View Profile
+        </button>
+  
+        {/* Show Edit/Delete when:
+            1. On any page AND user is author
+            2. OR specifically on profile pages regardless of author */}
+        {(isAuthor || isProfilePage) && (
+          <>
+            <button
+              onClick={() => {
+                setIsEditing(true);
+                setShowOptions(false);
+              }}
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+            >
+              Edit Post
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className={`block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left ${
+                isDeleting ? "opacity-50" : ""
+              }`}
+            >
+              {isDeleting ? "Deleting..." : "Delete Post"}
+            </button>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
-    <div className="bg-white shadow-md rounded-lg p-4 mb-6 w-full max-w-2xl mx-auto">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6 w-full max-w-2xl mx-auto">
       {/* User Info with Three Dots Menu */}
       <div className="flex items-center justify-between mb-4">
         <div
-          className="flex items-center cursor-pointer"
+          className="flex items-center cursor-pointer group"
           onClick={handleViewProfile}
         >
           {userId?.profilePic ? (
             <img
               src={userId.profilePic}
               alt={userId.name}
-              className="w-10 h-10 rounded-full object-cover"
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-white group-hover:ring-blue-200 transition-all"
             />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white flex items-center justify-center font-bold text-lg group-hover:from-blue-600 group-hover:to-purple-600 transition-all">
               {userId?.name?.[0]?.toUpperCase() || "U"}
             </div>
           )}
           <div className="ml-3">
-            <p className="text-sm font-semibold">{userId?.name}</p>
+            <p className="text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+              {userId?.name}
+            </p>
             <p className="text-xs text-gray-500">{postDate}</p>
           </div>
         </div>
@@ -145,117 +203,80 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
         {/* Three-dot menu */}
         <div className="relative">
           <button
-            className="p-1 rounded-full hover:bg-gray-200 focus:outline-none"
+            className="p-1.5 rounded-full hover:bg-gray-100 focus:outline-none transition-colors"
             onClick={toggleOptions}
             aria-label="Post options"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
+              className="h-5 w-5 text-gray-500"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
               <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
             </svg>
           </button>
-
-          {showOptions && (
-            <div
-              className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => {
-                  handleViewProfile();
-                  setShowOptions(false);
-                }}
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-              >
-                View Profile
-              </button>
-
-              {(currentUser?._id === userId?._id?.toString() ||
-                currentUser?._id === userId?.toString()) && (
-                <>
-                  <button
-                    onClick={() => {
-                      setIsEditing(true);
-                      setShowOptions(false);
-                    }}
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  >
-                    Edit Post
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className={`block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left ${
-                      isDeleting ? "opacity-50" : ""
-                    }`}
-                  >
-                    {isDeleting ? "Deleting..." : "Delete Post"}
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+          {renderOptionsMenu()}
         </div>
       </div>
 
       {/* Post Content */}
-      <h3 className="text-lg font-bold mb-2">{title}</h3>
+      <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
       <p className="text-gray-700 mb-4 whitespace-pre-line">{content}</p>
       {image && (
         <img
           src={image}
           alt="Post"
-          className="w-full rounded-lg object-cover mb-4 max-h-[400px]"
+          className="w-full rounded-lg object-cover mb-4 max-h-[400px] border border-gray-100"
           loading="lazy"
         />
       )}
 
       {/* Action Buttons */}
-      <div className="flex justify-between text-gray-600 text-sm border-t pt-3">
+      <div className="flex justify-between text-gray-600 text-sm border-t border-gray-100 pt-3">
         <button
           onClick={handleLike}
-          className={`flex items-center hover:text-indigo-600 transition duration-150 ${
-            isLiked ? "text-indigo-600" : ""
+          className={`flex items-center space-x-1 px-3 py-1.5 rounded-md hover:bg-gray-50 transition-colors ${
+            isLiked ? "text-blue-600" : "hover:text-blue-600"
           }`}
           disabled={!currentUser}
         >
-          👍 Like ({likes.length})
+          <span>👍</span>
+          <span>Like ({likes.length})</span>
         </button>
         <button
           onClick={() => setShowComments(!showComments)}
-          className="hover:text-indigo-600 transition duration-150"
+          className={`flex items-center space-x-1 px-3 py-1.5 rounded-md hover:bg-gray-50 hover:text-blue-600 transition-colors`}
           disabled={!currentUser}
         >
-          💬 Comment ({comments.length})
+          <span>💬</span>
+          <span>Comment ({comments.length})</span>
         </button>
         <button
-          className="hover:text-indigo-600 transition duration-150"
+          className={`flex items-center space-x-1 px-3 py-1.5 rounded-md hover:bg-gray-50 hover:text-blue-600 transition-colors`}
           disabled={!currentUser}
         >
-          🔖 Save
+          <span>🔖</span>
+          <span>Save</span>
         </button>
       </div>
 
       {/* Comments Section */}
       {showComments && (
-        <div className="mt-4 border-t pt-3">
+        <div className="mt-4 border-t border-gray-100 pt-3">
           {currentUser ? (
-            <form onSubmit={handleCommentSubmit} className="mb-3 flex">
+            <form onSubmit={handleCommentSubmit} className="mb-3 flex rounded-lg overflow-hidden shadow-sm">
               <input
                 type="text"
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Write a comment..."
-                className="flex-1 border rounded-l-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="flex-1 border border-r-0 border-gray-200 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
               <button
                 type="submit"
-                className="bg-indigo-600 text-white px-4 py-2 rounded-r-lg hover:bg-indigo-700 disabled:opacity-50"
+                className="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 disabled={!commentText.trim()}
               >
                 Post
@@ -266,7 +287,7 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
               Please{" "}
               <button
                 onClick={() => navigate("/auth")}
-                className="text-indigo-600 hover:underline"
+                className="text-blue-600 hover:underline font-medium"
               >
                 login
               </button>{" "}
@@ -278,26 +299,30 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
             {comments.length > 0 ? (
               comments.map((comment) => (
                 <div key={comment._id} className="flex items-start">
-                  <img
-                    src={comment.userId?.profilePic || "/default-profile.png"}
-                    alt={comment.userId?.name}
-                    className="w-8 h-8 rounded-full mr-2"
-                  />
-                  <div className="bg-gray-100 rounded-lg p-2 flex-1">
-                    <p className="font-semibold text-sm">
-                      {comment.userId?.name}
-                    </p>
-                    <p className="text-gray-800">{comment.content}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(comment.createdAt).toLocaleString()}
-                    </p>
+                  <div className="flex-shrink-0">
+                    <img
+                      src={comment.userId?.profilePic || "/default-profile.png"}
+                      alt={comment.userId?.name}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  </div>
+                  <div className="ml-2 flex-1">
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="font-semibold text-sm text-gray-800">
+                        {comment.userId?.name}
+                      </p>
+                      <p className="text-gray-700 mt-1">{comment.content}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(comment.createdAt).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-gray-500 text-center py-2">
-                No comments yet
-              </p>
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-500">No comments yet</p>
+              </div>
             )}
           </div>
         </div>
