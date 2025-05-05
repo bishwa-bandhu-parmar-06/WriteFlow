@@ -14,8 +14,11 @@ const Navbar = () => {
         className="flex items-center cursor-pointer hover:opacity-90 transition-opacity"
         onClick={() => navigate("/")}
       >
-        <img className="w-10 h-10 mr-2" src={Logo} alt="WriteFlow" />
-        <span className="text-white text-lg font-semibold">WriteFlow</span>
+        <img
+          className="w-12 h-12 object-contain"
+          src={Logo}
+          alt="WriteFlow Logo"
+        />
       </div>
 
       {/* Navigation Links */}
@@ -109,16 +112,16 @@ const Navbar = () => {
             </div>
           </div>
         ) : (
-            <NavLink
-              className={({ isActive }) =>
-                isActive
-                  ? "text-white font-bold underline"
-                  : "text-white hover:text-gray-200"
-              }
-              to="/auth"
-            >
-              Signin/Signup
-            </NavLink>
+          <NavLink
+            className={({ isActive }) =>
+              isActive
+                ? "text-white font-bold underline"
+                : "text-white hover:text-gray-200"
+            }
+            to="/auth"
+          >
+            Signin/Signup
+          </NavLink>
         )}
       </div>
     </nav>

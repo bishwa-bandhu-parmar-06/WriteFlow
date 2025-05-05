@@ -12,6 +12,7 @@ import UsersEditDetailsForm from "./UsersEditDetailsForm";
 import CreatePostForm from "../posts/CreatePost";
 import SinglePost from "../posts/SinglePost";
 import { getMyPosts } from "../posts/postsApi";
+import Loader from "../../components/Loader";
 
 const Profile = () => {
   const { userId } = useParams();
@@ -21,12 +22,14 @@ const Profile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [postsLoading, setPostsLoading] = useState(true);
   const [myPosts, setMyPosts] = useState([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        setProfileLoading(true);
         const currentUser = JSON.parse(localStorage.getItem("user"));
         const currentUserId = currentUser?._id;
 
@@ -42,10 +45,11 @@ const Profile = () => {
         setUser(response.data.user);
         setIsCurrentUser(response.data.user._id === currentUserId);
         setIsFollowing(response.data.user.followers?.includes(currentUserId));
-        setLoading(false);
       } catch (error) {
         toast.error(error.response?.data?.message || "Failed to load profile");
         navigate("/");
+      } finally {
+        setProfileLoading(false);
       }
     };
 
@@ -55,17 +59,21 @@ const Profile = () => {
   useEffect(() => {
     const fetchMyPosts = async () => {
       try {
+        setPostsLoading(true);
         const res = await getMyPosts();
         setMyPosts(res.data.posts);
-        setLoading(false);
       } catch (err) {
         console.error(err);
-        setLoading(false);
+        toast.error("Failed to load posts");
+      } finally {
+        setPostsLoading(false);
       }
     };
 
-    fetchMyPosts();
-  }, []);
+    if (user) {
+      fetchMyPosts();
+    }
+  }, [user]);
 
   const handleFollow = async () => {
     try {
@@ -128,7 +136,9 @@ const Profile = () => {
   const handleUpdateProfile = (updatedUser) => {
     setUser(updatedUser);
     setShowEditForm(false);
+    toast.success("Profile updated successfully");
   };
+
   const handlePostUpdated = (updatedPost) => {
     setMyPosts(prevPosts => 
       prevPosts.map(post => 
@@ -136,8 +146,30 @@ const Profile = () => {
       )
     );
   };
-  if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  if (!user) return <div className="flex justify-center items-center h-screen">User not found</div>;
+
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl text-gray-700">User not found</p>
+          <button 
+            onClick={() => navigate("/")}
+            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -224,11 +256,11 @@ const Profile = () => {
             {/* Followers/Following Count */}
             <div className="flex gap-4 mt-4">
               <div className="text-center">
-                <span className="font-bold block">{user.followers.length}</span>
+                <span className="font-bold block">{user.followers?.length || 0}</span>
                 <span className="text-gray-600 text-sm">Followers</span>
               </div>
               <div className="text-center">
-                <span className="font-bold block">{user.following.length}</span>
+                <span className="font-bold block">{user.following?.length || 0}</span>
                 <span className="text-gray-600 text-sm">Following</span>
               </div>
             </div>
@@ -243,7 +275,11 @@ const Profile = () => {
             {isCurrentUser ? "My Posts" : `${user.name}'s Posts`}
           </h2>
 
-          {myPosts.length === 0 ? (
+          {postsLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader />
+            </div>
+          ) : myPosts.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500">No posts yet.</p>
               {isCurrentUser && (
@@ -257,15 +293,13 @@ const Profile = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              
-  {myPosts.map((post) => (
-    <SinglePost 
-      key={post._id} 
-      post={post}
-      onPostUpdated={handlePostUpdated}
-    />
-  ))}
-
+              {myPosts.map((post) => (
+                <SinglePost 
+                  key={post._id} 
+                  post={post}
+                  onPostUpdated={handlePostUpdated}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -284,7 +318,11 @@ const Profile = () => {
         <CreatePostForm
           onClose={() => setShowCreatePost(false)}
           onPostCreated={() => {
-            fetchMyPosts();
+            setPostsLoading(true);
+            getMyPosts()
+              .then(res => setMyPosts(res.data.posts))
+              .catch(err => console.error(err))
+              .finally(() => setPostsLoading(false));
             setShowCreatePost(false);
           }}
         />

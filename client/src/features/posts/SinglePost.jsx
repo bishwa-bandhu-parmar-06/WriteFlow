@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toggleLike, createComment, deletePost } from "../posts/postsApi";
 import { useAuth } from "../../context/AuthContext";
 import EditPost from "./EditPost";
 import { toast } from "react-toastify";
+import Loader from "../../components/Loader";
 
 const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
   const { title, content, image, createdAt, userId, likes = [], _id } = post;
@@ -13,9 +14,18 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
   const [comments, setComments] = useState(post.comments || []);
   const [showOptions, setShowOptions] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Added loading state
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Simulate loading (you can replace this with actual data loading)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const postDate = new Date(createdAt).toLocaleString();
   const isLiked = currentUser && likes.includes(currentUser._id);
@@ -23,8 +33,7 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
 
   // Determine the context
   const isHomePage = location.pathname === "/";
-  const isProfilePage = location.pathname.includes("/profile") || 
-                       location.pathname.includes("/user");
+  const isProfilePage = location.pathname.includes("/profile");
 
   const handleLike = async () => {
     if (!currentUser) {
@@ -32,6 +41,7 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
       return;
     }
     try {
+      setIsLoading(true); // Show loader during like operation
       await toggleLike(_id);
       // Update UI optimistically
       if (isLiked) {
@@ -46,6 +56,8 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
       if (error.response?.status === 401) {
         navigate("/auth");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -58,6 +70,7 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
     if (!commentText.trim()) return;
 
     try {
+      setIsLoading(true); // Show loader during comment submission
       const response = await createComment(_id, commentText);
       setComments([...comments, response.data.comment]);
       setCommentText("");
@@ -69,6 +82,8 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
       if (error.response?.status === 401) {
         navigate("/auth");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -77,6 +92,7 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
 
     setIsDeleting(true);
     try {
+      setIsLoading(true); // Show loader during deletion
       await deletePost(_id);
       onPostDeleted?.(_id);
       toast.success("Post deleted successfully");
@@ -85,9 +101,11 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
       toast.error("Failed to delete post");
     } finally {
       setIsDeleting(false);
+      setIsLoading(false);
       setShowOptions(false);
     }
   };
+
 
   const handleViewProfile = () => {
     if (userId?._id) {
@@ -109,6 +127,13 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
     return () => document.removeEventListener("click", handleClickOutside);
   }, [showOptions]);
 
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6 w-full max-w-2xl mx-auto min-h-[300px] flex items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
   if (isEditing) {
     return (
       <EditPost
@@ -127,8 +152,6 @@ const SinglePost = ({ post, onPostUpdated, onPostDeleted }) => {
 
   const renderOptionsMenu = () => {
     if (!showOptions) return null;
-  
-    
     return (
       <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200"
         onClick={(e) => e.stopPropagation()}
