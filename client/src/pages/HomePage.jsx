@@ -7,14 +7,15 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { logout, deleteProfile } from "../features/users/UsersApi";
 import UsersEditDetailsForm from "../features/users/UsersEditDetailsForm";
 import CreatePostForm from "../features/posts/CreatePost";
+import { toast } from "react-toastify";
+
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
   const [users, setUsers] = useState([]);
-  const [user, setUser] = useState(null);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showEditForm, setShowEditForm] = useState(false);
-  const { user: currentUser, logout: authLogout } = useAuth();
+  const { user: currentUser, logout: authLogout, updateUser } = useAuth(); // Added updateUser
   const navigate = useNavigate();
 
   const fetchPosts = async () => {
@@ -49,10 +50,13 @@ const HomePage = () => {
   const handlePostDeleted = (deletedPostId) => {
     setPosts(posts.filter((post) => post._id !== deletedPostId));
   };
+
   const handleUpdateProfile = (updatedUser) => {
-    setUser(updatedUser);
+    updateUser(updatedUser); // Use updateUser from AuthContext instead of local state
     setShowEditForm(false);
+    // toast.success("Profile updated successfully");
   };
+
   const handleDeleteProfile = async () => {
     if (
       window.confirm(
@@ -61,8 +65,7 @@ const HomePage = () => {
     ) {
       try {
         await deleteProfile();
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        authLogout(); // Use authLogout from context instead of manual cleanup
         toast.success("Profile deleted successfully");
         navigate("/");
       } catch (error) {
@@ -74,8 +77,7 @@ const HomePage = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      authLogout(); // Use authLogout from context
       toast.success("Logged out successfully");
       navigate("/auth");
     } catch (error) {
@@ -111,27 +113,21 @@ const HomePage = () => {
                 </div>
 
                 <div className="space-y-2">
-                <button
-                      onClick={() => setShowCreatePost(true)}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
-                    >
-                      Create Post
-                    </button>
+                  <button
+                    onClick={() => setShowCreatePost(true)}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition w-full"
+                  >
+                    Create Post
+                  </button>
                   <NavLink
                     to={`/user/${currentUser._id}`}
                     className="block w-full text-center bg-gray-200 py-2 rounded hover:bg-gray-300 transition"
                   >
                     View Profile
                   </NavLink>
-                  {/* <NavLink
-                    to="/edit-profile"
-                    className="block w-full text-center bg-gray-200 py-2 rounded hover:bg-gray-300 transition"
-                  >
-                    Edit Profile
-                  </NavLink> */}
                   <button
                     onClick={() => setShowEditForm(true)}
-                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition"
+                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition w-full"
                   >
                     Edit Profile
                   </button>
@@ -142,11 +138,11 @@ const HomePage = () => {
                     Logout
                   </button>
                   <button
-                      onClick={handleDeleteProfile}
-                      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                    >
-                      Delete Profile
-                    </button>
+                    onClick={handleDeleteProfile}
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition w-full"
+                  >
+                    Delete Profile
+                  </button>
                 </div>
               </div>
             </div>
@@ -237,13 +233,14 @@ const HomePage = () => {
         />
       )}
       {showCreatePost && (
-              <CreatePostForm
-                onClose={() => setShowCreatePost(false)}
-                onPostCreated={() => {
-                  setShowCreatePost(false);
-                }}
-              />
-            )}
+        <CreatePostForm
+          onClose={() => setShowCreatePost(false)}
+          onPostCreated={() => {
+            setShowCreatePost(false);
+            fetchPosts(); // Refresh posts after creation
+          }}
+        />
+      )}
     </div>
   );
 };

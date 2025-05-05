@@ -190,6 +190,7 @@ module.exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 // module.exports.updateProfile = async (req, res) => {
 //   try {
 //     const user = await User.findById(req.user.id);

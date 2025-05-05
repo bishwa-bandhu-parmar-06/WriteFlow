@@ -12,28 +12,57 @@ export const AuthProvider = ({ children }) => {
     return null;
   });
 
-  // Update localStorage whenever user changes
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
+  // Initialize token state
+  const [token, setToken] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('token') || null;
     }
-  }, [user]);
+    return null;
+  });
 
-  const login = (userData) => {
+  // Update localStorage whenever user or token changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('user');
+      }
+      
+      if (token) {
+        localStorage.setItem('token', token);
+      } else {
+        localStorage.removeItem('token');
+      }
+    }
+  }, [user, token]);
+
+  const login = (userData, authToken) => {
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    setToken(authToken);
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token'); // Also remove token if you store it
+    setToken(null);
+  };
+
+  // Add this function to update user data
+  const updateUser = (updatedUserData) => {
+    setUser(prevUser => ({
+      ...prevUser,
+      ...updatedUserData
+    }));
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token,
+      login, 
+      logout,
+      updateUser // Make this available to consumers
+    }}>
       {children}
     </AuthContext.Provider>
   );
