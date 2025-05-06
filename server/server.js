@@ -12,7 +12,7 @@ const postRoutes = require('./routes/post.routes');
 
 // Middleware
 app.use(cors({
-  origin: "https://write-flow-bice.vercel.app/", // || 'http://localhost:5173', // not '*'
+  origin: "https://write-flow-bice.vercel.app", // || 'http://localhost:5173', // not '*'
   credentials: true                // allow cookies or headers to be sent
 }));
 app.use(express.json());
